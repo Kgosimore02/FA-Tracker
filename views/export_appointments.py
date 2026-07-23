@@ -58,35 +58,36 @@ def _build_appt(ws, branches, appt_by_branch, fa_counts, year, mo, mname):
     for ri,bname in zip(DR,branches):
         ap=appt_by_branch.get(bname,{}); fa=fa_counts.get(bname,0) or 0
         rf=LGREY if ri%2==0 else WHITE
+        target=fa*3
         _s(ws,ri,1,bname,fill=rf)
         _s(ws,ri,2,fa,fill=rf,fmt="#,##0",h="right")
-        ws.cell(ri,3,f"=B{ri}*3").number_format="#,##0"
-        ws.cell(ri,3).fill=_p(rf); ws.cell(ri,3).border=_b(); ws.cell(ri,3).font=_f(); ws.cell(ri,3).alignment=_a("right")
+        _s(ws,ri,3,target,fill=rf,fmt="#,##0",h="right")
         for wk,ac,sc in [(1,4,5),(2,7,8),(3,10,11),(4,13,14)]:
-            att=ap.get(wk,0) or 0; al=get_column_letter(ac)
+            att=ap.get(wk,0) or 0
             _s(ws,ri,ac,att,fill=rf,fmt="#,##0",h="right")
-            sr=att/(fa*3) if fa else 0
+            sr=att/target if target else 0
             sf=GREEN if sr>=1 else YEL if sr>=0.7 else (rf if att==0 else RED)
-            ws.cell(ri,sc,f"={al}{ri}/C{ri}").number_format="0.0%"
-            ws.cell(ri,sc).fill=_p(sf); ws.cell(ri,sc).border=_b(); ws.cell(ri,sc).font=_f(); ws.cell(ri,sc).alignment=_a("right")
-        ws.cell(ri,15,f"=SUM(G{ri},J{ri},M{ri})").number_format="#,##0"
-        ws.cell(ri,15).font=_f(True); ws.cell(ri,15).fill=_p(rf); ws.cell(ri,15).border=_b(); ws.cell(ri,15).alignment=_a("right")
+            _s(ws,ri,sc,sr,fill=sf,fmt="0%",h="right")
+        total_att=(ap.get(2,0) or 0)+(ap.get(3,0) or 0)+(ap.get(4,0) or 0)
+        _s(ws,ri,15,total_att,True,fill=rf,fmt="#,##0",h="right")
 
     # TOTAl row
     ds,de=DR.start,DR.stop-1
     _s(ws,TR,1,"TOTAl",True,MGREY,fc=NAVY)
-    for col in [2,3]:
-        lc=get_column_letter(col)
-        ws.cell(TR,col,f"=SUM({lc}{ds}:{lc}{de})").number_format="#,##0"
-        ws.cell(TR,col).font=_f(True); ws.cell(TR,col).fill=_p(MGREY); ws.cell(TR,col).border=_b(); ws.cell(TR,col).alignment=_a("right")
-    for ac,sc in [(4,5),(7,8),(10,11),(13,14)]:
-        al=get_column_letter(ac)
-        ws.cell(TR,ac,f"=SUM({al}{ds}:{al}{de})").number_format="#,##0"
-        ws.cell(TR,ac).font=_f(True); ws.cell(TR,ac).fill=_p(MGREY); ws.cell(TR,ac).border=_b(); ws.cell(TR,ac).alignment=_a("right")
-        ws.cell(TR,sc,f"={al}{TR}/C{TR}").number_format="0.0%"
-        ws.cell(TR,sc).font=_f(True); ws.cell(TR,sc).fill=_p(MGREY); ws.cell(TR,sc).border=_b(); ws.cell(TR,sc).alignment=_a("right")
-    ws.cell(TR,15,f"=SUM(G{TR},J{TR},M{TR})").number_format="#,##0"
-    ws.cell(TR,15).font=_f(True); ws.cell(TR,15).fill=_p(MGREY); ws.cell(TR,15).border=_b(); ws.cell(TR,15).alignment=_a("right")
+    # Number FA and Target totals
+    tot_fa=sum(fa_counts.get(b,0) or 0 for b in branches)
+    tot_tgt=tot_fa*3
+    _s(ws,TR,2,tot_fa,True,fill=MGREY,fmt="#,##0",h="right")
+    _s(ws,TR,3,tot_tgt,True,fill=MGREY,fmt="#,##0",h="right")
+    for wk,ac,sc in [(1,4,5),(2,7,8),(3,10,11),(4,13,14)]:
+        tot_att=sum(appt_by_branch.get(b,{}).get(wk,0) or 0 for b in branches)
+        sr_tot=tot_att/tot_tgt if tot_tgt else 0
+        _s(ws,TR,ac,tot_att,True,fill=MGREY,fmt="#,##0",h="right")
+        _s(ws,TR,sc,sr_tot,True,fill=MGREY,fmt="0%",h="right")
+    total_all=sum((appt_by_branch.get(b,{}).get(2,0) or 0)+
+                  (appt_by_branch.get(b,{}).get(3,0) or 0)+
+                  (appt_by_branch.get(b,{}).get(4,0) or 0) for b in branches)
+    _s(ws,TR,15,total_all,True,fill=MGREY,fmt="#,##0",h="right")
     ws.freeze_panes="B4"
 
 
@@ -151,7 +152,6 @@ def render(branch):
     sel_months=st.multiselect("Month(s)",list(MN.values()),default=[MN[date.today().month]])
     if not sel_months: st.warning("Select at least one month."); return
 
-    
     if st.button("Generate",type="primary"):
         st.cache_data.clear()
         months=[k for k,v in MN.items() if v in sel_months]
