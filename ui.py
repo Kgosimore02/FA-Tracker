@@ -88,7 +88,6 @@ def sidebar_nav(current: str) -> dict:
         # ── DATA ENTRY ────────────────────────────────────────────────────────
         st.markdown('<p class="nav-lbl">Data Entry</p>', unsafe_allow_html=True)
         _btn("daily_entry",  "📋  Daily NOC Entry",    current)
-        _btn("budget_setup", "💰  Budget Setup",        current)
         _btn("agent_mgmt",   "👤  Agent Management",    current)
 
         # ── REPORTS & EXPORTS ─────────────────────────────────────────────────
