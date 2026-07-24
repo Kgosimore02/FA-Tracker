@@ -13,7 +13,6 @@ if "page" not in st.session_state:
 
 PAGE_MAP = {
     "daily_entry":         "views.daily_entry",
-    "budget_setup":        "views.budget_setup",
     "agent_mgmt":          "views.agent_mgmt",
     "export_daily":        "views.export_daily",
     "export_weekly":       "views.export_weekly",
